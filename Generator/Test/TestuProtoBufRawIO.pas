@@ -1,4 +1,4 @@
-unit TestuProtoBufRawIO;
+﻿unit TestuProtoBufRawIO;
 {
 
   Delphi DUnit Test Case
@@ -41,6 +41,7 @@ type
   published
     procedure TestVarint;
     procedure TestVarintErrors;
+    procedure TestSInt32;
     procedure TestReadLittleEndian32;
     procedure TestReadLittleEndian64;
     procedure TestDecodeZigZag;
@@ -88,6 +89,9 @@ begin
   CheckEquals(integer($C0000000), decodeZigZag32($7FFFFFFF));
   CheckEquals(integer($7FFFFFFF), decodeZigZag32(integer($FFFFFFFE)));
   CheckEquals(integer($80000000), decodeZigZag32(integer($FFFFFFFF)));
+  //test when zig zag results in a negative encoded value, also for TestSInt32
+  CheckEquals(-$80000000, decodeZigZag32(-1));
+  CheckEquals($80000000-1, decodeZigZag32(-2));
   (* 64 *)
   CheckEquals(0, decodeZigZag64(0));
   CheckEquals(-1, decodeZigZag64(1));
@@ -337,6 +341,59 @@ begin
     memStream.Free;
     in_pb.Free;
     out_pb.Free;
+  end;
+end;
+
+procedure TestProtoBufRawIO.TestSInt32;
+type
+  TSIntCase = record
+    bytes: array [1 .. 10] of byte; // Encoded bytes.
+    Size: integer; // Encoded size, in bytes.
+    value: Integer; // Parsed value.
+  end;
+const
+  SIntCases: array [1 .. 7] of TSIntCase = (
+    (bytes: ($00, $00, $00, $00, $00, $00, $00, $00, $00, $00); Size: 1; value: 0),
+    (bytes: ($01, $00, $00, $00, $00, $00, $00, $00, $00, $00); Size: 1; value: -1),
+    (bytes: ($02, $00, $00, $00, $00, $00, $00, $00, $00, $00); Size: 1; value: 1),
+    (bytes: ($03, $00, $00, $00, $00, $00, $00, $00, $00, $00); Size: 1; value: -2),
+    (bytes: ($04, $00, $00, $00, $00, $00, $00, $00, $00, $00); Size: 1; value: 2),
+    (bytes: ($FF, $FF, $FF, $FF, $0F, $00, $00, $00, $00, $00); Size: 5; value: -$80000000),
+    (bytes: ($FE, $FF, $FF, $FF, $0F, $00, $00, $00, $00, $00); Size: 5; value: $80000000 - 1)
+    );
+var
+  i, j, k: integer;
+  s: TSIntCase;
+  pbi: TProtoBufInput;
+  pbo: TProtoBufOutput;
+  buf, output: AnsiString;
+  int: integer;
+begin
+  pbo:= TProtoBufOutput.Create;
+  try
+    for i := Low(SIntCases) to High(SIntCases) do
+      begin
+        s:= SIntCases[i];
+        pbo.Clear;
+        // create test buffer
+        SetLength(buf, s.Size);
+        for j := 1 to s.Size do
+          buf[j] := AnsiChar(s.bytes[j]);
+        pbi := TProtoBufInput.Create(@buf[1], s.Size);
+        try
+          int := pbi.readSInt32;
+          CheckEquals(s.value, int, Format('Test SInt32 %d fails', [i]));
+          pbo.writeRawSInt32(s.value);
+          output:= pbo.GetText;
+          CheckEquals(s.Size, Length(output), Format('Output for Test %d is not as long/short as expected', [i]));
+          for k:= 1 to s.Size do
+            CheckEquals(s.bytes[k], Byte(output[k]), Format('Output for Test %d differs from input at index %d', [i, k]));
+        finally
+          pbi.Free;
+        end;
+      end;
+  finally
+    pbo.Free;
   end;
 end;
 

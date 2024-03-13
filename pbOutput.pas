@@ -166,7 +166,7 @@ end;
 
 procedure TProtoBufOutput.writeRawSInt32(value: integer);
 begin
-  writeRawVarint32(EncodeZigZag32(value));
+  DoWriteRawVarint32(EncodeZigZag32(value));
 end;
 
 procedure TProtoBufOutput.writeRawSInt64(value: int64);
