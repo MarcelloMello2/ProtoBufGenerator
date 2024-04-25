@@ -614,6 +614,7 @@ begin
   ReadCommentIfExists(FComments, True, Proto, iPos);
   OneOfPropertyParent:= nil;
   FName := ReadWordFromBuf(Proto, iPos, ['{']);
+  ReadCommentIfExists(FComments, True, Proto, iPos);
   SkipRequiredChar(Proto, iPos, '{');
   TempComments:= TStringList.Create;
   try

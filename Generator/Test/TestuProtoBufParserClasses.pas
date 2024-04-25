@@ -131,6 +131,7 @@ type
   published
     procedure TestParseFromProto;
     procedure TestMessageComments;
+    procedure TestMessageCommentInsideIssue41;
     procedure TestOneOfComments;
   end;
   // Test methods for class TProtoFile
@@ -541,6 +542,15 @@ procedure TestTProtoBufMessage.TearDown;
 begin
   FProtoBufMessage.Free;
   FProtoBufMessage := nil;
+end;
+
+procedure TestTProtoBufMessage.TestMessageCommentInsideIssue41;
+begin
+  CallParseFromProto('TestMsg0 //before'#13#10'//second'#13#10'{ int32 Field1 = 1;} //after'#13#10'//not for us');
+  CheckEquals('TestMsg0', FProtoBufMessage.Name);
+  CheckEquals(1, FProtoBufMessage.Count);
+  CheckEquals('Field1', FProtoBufMessage[0].Name);
+  CheckEquals('before'#13#10'second'#13#10'after', FProtoBufMessage.Comments.Text);
 end;
 
 procedure TestTProtoBufMessage.TestMessageComments;
