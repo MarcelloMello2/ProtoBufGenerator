@@ -35,8 +35,7 @@ type
     (* Encode and write tag. *)
     procedure writeTag(fieldNumber: integer; wireType: integer);
     (* Write the data with specified size. *)
-    procedure writeRawData(const p: Pointer; size: integer); overload;
-    procedure writeRawData(const buf; size: integer); overload;
+    procedure writeRawData(const p: Pointer; size: integer);
 
     (* Get the result as a string *)
     function GetText: AnsiString;
@@ -146,22 +145,7 @@ var
   b: ShortInt;
 begin
   b := ord(value);
-  writeRawData(b, SizeOf(Byte));
-end;
-
-procedure TProtoBufOutput.writeRawData(const buf; size: integer);
-begin
-  {$IFDEF MACOS}
-  //workaround for Delphi macOS64 compiler bug:
-  //https://quality.embarcadero.com/browse/RSP-29451
-  //compiler calls the wrong overload "writeRawData(const buf; size: integer)"
-  //i.e. ourself, resulting in a stack overflow; just copied the implementation
-  //of the intended overload "writeRawData(const p: Pointer; size: integer)"
-  //here
-  FBuffer.Add(@buf, size);
-  {$ELSE}
-  writeRawData(@buf, size);
-  {$ENDIF MACOS}
+  writeRawData(@b, SizeOf(Byte));
 end;
 
 procedure TProtoBufOutput.writeRawSInt32(value: integer);
@@ -200,7 +184,7 @@ begin
     value := value shr 7;
     if value <> 0 then
       b := b + $80;
-    writeRawData(b, SizeOf(ShortInt));
+    writeRawData(@b, SizeOf(ShortInt));
   until value = 0;
 end;
 
@@ -213,7 +197,7 @@ begin
     value := value shr 7;
     if value <> 0 then
       b := b + $80;
-    writeRawData(b, SizeOf(ShortInt));
+    writeRawData(@b, SizeOf(ShortInt));
   until value = 0;
 end;
 
@@ -228,7 +212,7 @@ begin
   writeTag(fieldNumber, WIRETYPE_LENGTH_DELIMITED);
   writeRawVarint32(length(value));
   if length(value) > 0 then
-    writeRawData(value[0], length(value));
+    writeRawData(@value[0], length(value));
 end;
 
 procedure TProtoBufOutput.writeDouble(fieldNumber: integer; value: double);
@@ -299,7 +283,7 @@ begin
   buf := TEncoding.UTF8.GetBytes(value);
   writeRawVarint32(length(buf));
   if length(buf) > 0 then
-    writeRawData(buf[0], length(buf));
+    writeRawData(@buf[0], length(buf));
 end;
 
 procedure TProtoBufOutput.writeUInt32(fieldNumber: integer; value: cardinal);
