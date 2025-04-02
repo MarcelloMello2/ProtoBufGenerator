@@ -11,7 +11,6 @@ interface
 uses
   SysUtils,
   Classes,
-  Generics.Collections,
   pbInput,
   pbOutput,
   pbPublic,
@@ -106,10 +105,10 @@ type
     FFieldE2: TEnum1;
     FFieldNested1: TTestNested1;
     FFieldNested2: TTestNested1;
-    FFieldArr1List: TList<Integer>;
-    FFieldArr2List: TList<Integer>;
-    FFieldArr3List: TList<string>;
-    FFieldArrE1List: TList<TEnum1>;
+    FFieldArr1List: TPBList<Integer>;
+    FFieldArr2List: TPBList<Integer>;
+    FFieldArr3List: TPBList<string>;
+    FFieldArrE1List: TPBList<TEnum1>;
     FFieldMArr2List: TProtoBufClassList<TTestMsg0>;
     FFieldImp1: TEnumGlobal;
     FFieldImp2: TEnumGlobal;
@@ -154,10 +153,10 @@ type
     property FieldNested1: TTestNested1 read FFieldNested1;
     property FieldNested2: TTestNested1 index tag_FieldNested2 read FFieldNested2 write SetFieldNested2;
     //repeated fields
-    property FieldArr1List: TList<Integer> read FFieldArr1List;
-    property FieldArr2List: TList<Integer> read FFieldArr2List;
-    property FieldArr3List: TList<string> read FFieldArr3List;
-    property FieldArrE1List: TList<TEnum1> read FFieldArrE1List;
+    property FieldArr1List: TPBList<Integer> read FFieldArr1List;
+    property FieldArr2List: TPBList<Integer> read FFieldArr2List;
+    property FieldArr3List: TPBList<string> read FFieldArr3List;
+    property FieldArrE1List: TPBList<TEnum1> read FFieldArrE1List;
     property FieldMArr2List: TProtoBufClassList<TTestMsg0> read FFieldMArr2List;
     //fields of imported types
     property FieldImp1: TEnumGlobal index tag_FieldImp1 read FFieldImp1 write SetFieldImp1;
@@ -282,10 +281,10 @@ begin
   FFieldMsg1 := TTestMsg0.Create;
   FieldE2 := Val2;
   FFieldNested1 := TTestNested1.Create;
-  FFieldArr1List := TList<Integer>.Create;
-  FFieldArr2List := TList<Integer>.Create;
-  FFieldArr3List := TList<string>.Create;
-  FFieldArrE1List := TList<TEnum1>.Create;
+  FFieldArr1List := TPBList<Integer>.Create;
+  FFieldArr2List := TPBList<Integer>.Create;
+  FFieldArr3List := TPBList<string>.Create;
+  FFieldArrE1List := TPBList<TEnum1>.Create;
   FFieldMArr2List := TProtoBufClassList<TTestMsg0>.Create;
 end;
 
@@ -403,19 +402,13 @@ begin
     if FieldHasValue[tag_DefField9] then
       ProtoBuf.writeFloat(tag_DefField9, FDefField9);
     if FieldHasValue[tag_FieldMsg1] then
-    begin
-      FFieldMsg1.SaveToBuf(tmpBuf);
-      ProtoBuf.writeMessage(tag_FieldMsg1, tmpBuf);
-    end;
+      SaveMessageFieldToBuf(FFieldMsg1, tag_FieldMsg1, tmpBuf, ProtoBuf);
     if FieldHasValue[tag_FieldE1] then
       ProtoBuf.writeInt32(tag_FieldE1, Integer(FFieldE1));
     if FieldHasValue[tag_FieldE2] then
       ProtoBuf.writeInt32(tag_FieldE2, Integer(FFieldE2));
     if FieldHasValue[tag_FieldNested1] then
-    begin
-      FFieldNested1.SaveToBuf(tmpBuf);
-      ProtoBuf.writeMessage(tag_FieldNested1, tmpBuf);
-    end;
+      SaveMessageFieldToBuf(FFieldNested1, tag_FieldNested1, tmpBuf, ProtoBuf);
     if FieldHasValue[tag_FieldNested2] then
       ProtoBuf.writeInt32(tag_FieldNested2, Integer(FFieldNested2));
     if FieldHasValue[tag_FieldArr1List] then
@@ -423,6 +416,7 @@ begin
         ProtoBuf.writeInt32(tag_FieldArr1List, FFieldArr1List[i]);
     if FieldHasValue[tag_FieldArr2List] then
     begin
+      tmpBuf.Clear;
       for i := 0 to FFieldArr2List.Count-1 do
         tmpBuf.writeRawVarint32(FFieldArr2List[i]);
       ProtoBuf.writeMessage(tag_FieldArr2List, tmpBuf);
