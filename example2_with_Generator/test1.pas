@@ -9,6 +9,7 @@ interface
 // ***********************************
 
 uses
+  Types,
   SysUtils,
   Classes,
   pbInput,
@@ -98,7 +99,7 @@ type
     FDefField5: Boolean;
     FDefField6: TEnumG0;
     FDefField7: Int64;
-    FDefField8: Integer;
+    FDefField8: DWORD;
     FDefField9: Single;
     FFieldMsg1: TTestMsg0;
     FFieldE1: TEnum1;
@@ -120,7 +121,7 @@ type
     procedure SetDefField5(Tag: Integer; const Value: Boolean);
     procedure SetDefField6(Tag: Integer; const Value: TEnumG0);
     procedure SetDefField7(Tag: Integer; const Value: Int64);
-    procedure SetDefField8(Tag: Integer; const Value: Integer);
+    procedure SetDefField8(Tag: Integer; const Value: DWORD);
     procedure SetDefField9(Tag: Integer; const Value: Single);
     procedure SetFieldE1(Tag: Integer; const Value: TEnum1);
     procedure SetFieldE2(Tag: Integer; const Value: TEnum1);
@@ -142,7 +143,7 @@ type
     property DefField5: Boolean index tag_DefField5 read FDefField5 write SetDefField5; // default true;
     property DefField6: TEnumG0 index tag_DefField6 read FDefField6 write SetDefField6 default g2;
     property DefField7: Int64 index tag_DefField7 read FDefField7 write SetDefField7 default 100;
-    property DefField8: Integer index tag_DefField8 read FDefField8 write SetDefField8 default 1;
+    property DefField8: DWORD index tag_DefField8 read FDefField8 write SetDefField8 default 1;
     property DefField9: Single index tag_DefField9 read FDefField9 write SetDefField9; // default 1.23e1;
     //field of message type
     property FieldMsg1: TTestMsg0 read FFieldMsg1;
@@ -480,7 +481,7 @@ begin
   FieldHasValue[Tag]:= True;
 end;
 
-procedure TTestMsg1.SetDefField8(Tag: Integer; const Value: Integer);
+procedure TTestMsg1.SetDefField8(Tag: Integer; const Value: DWORD);
 begin
   FDefField8:= Value;
   FieldHasValue[Tag]:= True;

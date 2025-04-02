@@ -1,4 +1,4 @@
-unit TestGeneratedProtoBufPas;
+﻿unit TestGeneratedProtoBufPas;
 {
 
   Delphi DUnit Test Case
@@ -64,7 +64,7 @@ begin
   FTestMsg1.DefField5 := True;
   FTestMsg1.DefField6 := TEnumG0.g2;
   FTestMsg1.DefField7 := -12;
-  FTestMsg1.DefField8 := -45432;
+  FTestMsg1.DefField8 := 45432;
   FTestMsg1.DefField9 := 5.5;
   FTestMsg1.FieldArr1List.Add(-5);
   FTestMsg1.FieldHasValue[TTestMsg1.tag_FieldArr1List]:= True;

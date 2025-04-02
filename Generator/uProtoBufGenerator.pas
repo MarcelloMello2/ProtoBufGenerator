@@ -50,9 +50,9 @@ begin
     sptSInt64:
       Result := 'Int64';
     sptFixed32:
-      Result := 'Integer';
+      Result := 'DWORD';
     sptFixed64:
-      Result := 'Int64';
+      Result := 'UInt64';
     sptSFixed32:
       Result := 'Integer';
     sptSFixed64:
@@ -807,6 +807,7 @@ begin
   SL.Add('// ***********************************');
   SL.Add('');
   SL.Add('uses');
+  SL.Add('  Types,');
   SL.Add('  SysUtils,');
   SL.Add('  Classes,');
   SL.Add('  pbInput,');

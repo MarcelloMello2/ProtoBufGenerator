@@ -19,6 +19,7 @@ unit pbInput;
 interface
 
 uses
+  Types,
   Classes,
   SysUtils,
   pbPublic;
@@ -84,9 +85,9 @@ type
     // Read an int32 field value
     function readInt32: integer;
     // Read a fixed64 field value
-    function readFixed64: int64;
+    function readFixed64: UInt64;
     // Read a fixed32 field value
-    function readFixed32: integer;
+    function readFixed32: DWORD;
 
     function readRawBoolean: boolean;
     // Read a boolean field value
@@ -246,12 +247,12 @@ begin
   result := readRawVarint32;
 end;
 
-function TProtoBufInput.readFixed64: int64;
+function TProtoBufInput.readFixed64: UInt64;
 begin
   result := readRawLittleEndian64;
 end;
 
-function TProtoBufInput.readFixed32: integer;
+function TProtoBufInput.readFixed32: DWORD;
 begin
   result := readRawLittleEndian32;
 end;

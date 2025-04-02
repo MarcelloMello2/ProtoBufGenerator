@@ -9,6 +9,7 @@ interface
 // ***********************************
 
 uses
+  Types,
   SysUtils,
   Classes,
   pbInput,

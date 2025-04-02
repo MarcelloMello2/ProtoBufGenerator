@@ -3,6 +3,7 @@ unit pbOutput;
 interface
 
 uses
+  Types,
   Classes,
   SysUtils,
   StrBuffer,
@@ -45,12 +46,12 @@ type
     procedure writeFloat(fieldNumber: integer; value: single);
     (* Write a int64 field, including tag. *)
     procedure writeInt64(fieldNumber: integer; value: int64);
-    (* Write a int64 field, including tag. *)
+    (* Write a int32 field, including tag. *)
     procedure writeInt32(fieldNumber: integer; value: integer);
     (* Write a fixed64 field, including tag. *)
-    procedure writeFixed64(fieldNumber: integer; value: int64);
+    procedure writeFixed64(fieldNumber: integer; value: UInt64);
     (* Write a fixed32 field, including tag. *)
-    procedure writeFixed32(fieldNumber: integer; value: integer);
+    procedure writeFixed32(fieldNumber: integer; value: DWORD);
     (* Write a sfixed64 field, including tag. *)
     procedure writeSFixed64(fieldNumber: integer; value: int64);
     (* Write a sfixed32 field, including tag. *)
@@ -77,7 +78,7 @@ type
     procedure writeTo(buffer: TProtoBufOutput);
   end;
 
-function EncodeZigZag32(const A: LongInt): LongWord;
+function EncodeZigZag32(const A: LongInt): DWORD;
 function EncodeZigZag64(const A: int64): UInt64;
 
 implementation
@@ -85,7 +86,7 @@ implementation
 {$R-}
 
 // returns SInt32 encoded to LongWord using 'ZigZag' encoding
-function EncodeZigZag32(const A: LongInt): LongWord;
+function EncodeZigZag32(const A: LongInt): DWORD;
 var
   I: int64;
 begin
@@ -227,13 +228,13 @@ begin
   writeRawData(@value, SizeOf(value));
 end;
 
-procedure TProtoBufOutput.writeFixed32(fieldNumber, value: integer);
+procedure TProtoBufOutput.writeFixed32(fieldNumber: Integer; value: DWORD);
 begin
   writeTag(fieldNumber, WIRETYPE_FIXED32);
   writeRawData(@value, SizeOf(value));
 end;
 
-procedure TProtoBufOutput.writeFixed64(fieldNumber: integer; value: int64);
+procedure TProtoBufOutput.writeFixed64(fieldNumber: integer; value: UInt64);
 begin
   writeTag(fieldNumber, WIRETYPE_FIXED64);
   writeRawData(@value, SizeOf(value));
