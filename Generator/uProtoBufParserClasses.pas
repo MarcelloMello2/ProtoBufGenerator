@@ -256,7 +256,7 @@ end;
 
 procedure SkipWhitespaces(const Proto: string; var iPos: integer; ASkipParagraphSeparator: Boolean = True);
 begin
-  while Proto[iPos].IsWhiteSpace and (iPos <= Length(Proto)) do
+  while (iPos <= Length(Proto)) and Proto[iPos].IsWhiteSpace do
   begin
     if not ASkipParagraphSeparator then
     begin
@@ -275,7 +275,7 @@ end;
 function ReadAllTillChar(const Proto: string; var iPos: integer; BreakSymbol: array of Char): string;
 begin
   Result := '';
-  while not Proto[iPos].IsInArray(BreakSymbol) and (iPos <= Length(Proto)) do
+  while (iPos <= Length(Proto)) and not Proto[iPos].IsInArray(BreakSymbol) do
     begin
       Result := Result + Proto[iPos];
       Inc(iPos);
@@ -320,7 +320,7 @@ end;
 procedure SkipRequiredChar(const Proto: string; var iPos: integer; const RequiredChar: Char);
 begin
   SkipWhitespaces(Proto, iPos);
-  if Proto[iPos] <> RequiredChar then
+  if (iPos > Length(Proto)) or (Proto[iPos] <> RequiredChar) then
     raise EParserError.Create(RequiredChar + ' not found in ProtoBuf');
   Inc(iPos);
 end;
@@ -330,7 +330,7 @@ begin
   SkipWhitespaces(Proto, iPos);
 
   Result := '';
-  while not Proto[iPos].IsWhiteSpace and not Proto[iPos].IsInArray(BreakSymbols) and (iPos <= Length(Proto)) do
+  while (iPos <= Length(Proto)) and not Proto[iPos].IsWhiteSpace and not Proto[iPos].IsInArray(BreakSymbols) do
     begin
       Result := Result + Proto[iPos];
       Inc(iPos);
@@ -412,7 +412,7 @@ begin
   SkipRequiredChar(Proto, iPos, '=');
 
   SkipWhitespaces(Proto, iPos);
-  if Proto[iPos] <> '"' then
+  if (iPos <= Length(Proto)) and (Proto[iPos] <> '"') then
     FOptionValue := ReadWordFromBuf(Proto, iPos, [',', ']'])
   else
     begin
@@ -425,7 +425,7 @@ begin
     end;
 
   SkipWhitespaces(Proto, iPos);
-  if Proto[iPos] = ',' then
+  if (iPos <= Length(Proto)) and (Proto[iPos] = ',') then
     Inc(iPos);
 end;
 
@@ -464,7 +464,7 @@ begin
   inherited;
   SkipRequiredChar(Proto, iPos, '[');
   SkipWhitespaces(Proto, iPos); // check for empty options
-  while Proto[iPos] <> ']' do
+  while (iPos <= Length(Proto)) and (Proto[iPos] <> ']') do
     begin
       Option := TProtoBufPropOption.Create(FRoot);
       try
@@ -530,12 +530,12 @@ begin
   TempComments:= TStringList.Create;
   try
     TempComments.TrailingLineBreak:= False;
-    while Proto[iPos] <> '}' do
+    while (iPos <= Length(Proto)) and (Proto[iPos] <> '}') do
       begin
         TempComments.Clear;
         SkipWhitespaces(Proto, iPos);
         ReadCommentIfExists(TempComments, True, Proto, iPos);
-        if Proto[iPos] = '}' then //after reading comments, the enum might prematurly end
+        if (iPos <= Length(Proto)) and (Proto[iPos] = '}') then //after reading comments, the enum might prematurly end
           Continue;
 
         lPos:= iPos;
@@ -619,7 +619,7 @@ begin
   TempComments:= TStringList.Create;
   try
     TempComments.TrailingLineBreak:= False;
-    while (Proto[iPos] <> '}') or (OneOfPropertyParent <> nil) do
+    while (iPos <= Length(Proto)) and ((Proto[iPos] <> '}') or (OneOfPropertyParent <> nil)) do
       begin
         if (OneOfPropertyParent <> nil) and (Proto[iPos] = '}') then
         begin
@@ -633,7 +633,7 @@ begin
         TempComments.Clear;
         SkipWhitespaces(Proto, iPos);
         ReadCommentIfExists(TempComments, True, Proto, iPos);
-        if Proto[iPos] = '}' then //after reading comments, the message might prematurly end
+        if (iPos <= Length(Proto)) and (Proto[iPos] = '}') then //after reading comments, the message might prematurly end
           Continue;
         if PosEx('enum', Proto, iPos) = iPos then
           begin

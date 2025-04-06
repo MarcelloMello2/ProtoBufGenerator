@@ -12,6 +12,7 @@
 interface
 
 uses
+  Types,
   {$IFDEF FPC}
   fpcunit, testregistry,
   {$ELSE}
@@ -101,17 +102,17 @@ begin
   CheckEquals(Int64($FFFFFFFFC0000000), decodeZigZag64($000000007FFFFFFF));
   CheckEquals(Int64($000000007FFFFFFF), decodeZigZag64($00000000FFFFFFFE));
   CheckEquals(Int64($FFFFFFFF80000000), decodeZigZag64($00000000FFFFFFFF));
-  CheckEquals(Int64($7FFFFFFFFFFFFFFF), decodeZigZag64($FFFFFFFFFFFFFFFE));
-  CheckEquals(Int64($8000000000000000), decodeZigZag64($FFFFFFFFFFFFFFFF));
+  CheckEquals(Int64($7FFFFFFFFFFFFFFF), decodeZigZag64(Int64($FFFFFFFFFFFFFFFE)));
+  CheckEquals(Int64($8000000000000000), decodeZigZag64(Int64($FFFFFFFFFFFFFFFF)));
 end;
 
 procedure TestProtoBufRawIO.TestEncodeDecodeZigZag;
 var
   i: integer;
-  j: integer;
+  j: DWORD;
 
   i64: Int64;
-  j64: Int64;
+  j64: UInt64;
 begin
   for i := -50000 to 50000 do
     begin
@@ -121,11 +122,11 @@ begin
 
   i := -MaxInt;
   j := EncodeZigZag32(i);
-  CheckEquals(i, decodeZigZag32(j), 'ZigZag32 symmetry error');
+  CheckEquals(i, decodeZigZag32(Integer(j)), 'ZigZag32 symmetry error');
 
   i := MaxInt;
   j := EncodeZigZag32(i);
-  CheckEquals(i, decodeZigZag32(j), 'ZigZag32 symmetry error');
+  CheckEquals(i, decodeZigZag32(Integer(j)), 'ZigZag32 symmetry error');
 
   for i := -50000 to 50000 do
     begin
@@ -136,7 +137,7 @@ begin
 
   i64 := $7FFFFFFFFFFFFFFF;
   j64 := EncodeZigZag64(i64);
-  CheckEquals(i64, decodeZigZag64(j64), 'ZigZag64 symmetry error');
+  CheckEquals(i64, decodeZigZag64(Int64(j64)), 'ZigZag64 symmetry error');
 end;
 
 procedure TestProtoBufRawIO.TestReadBytes;
