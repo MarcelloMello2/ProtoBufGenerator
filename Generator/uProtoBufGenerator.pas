@@ -846,6 +846,7 @@ var
   Proto: TProtoFile;
   SL: TStringList;
   iPos: Integer;
+  sProto: string;
 begin
   SL := TStringList.Create;
   try
@@ -854,7 +855,8 @@ begin
     try
       Proto.FileName := InputFile;
       iPos := 1;
-      Proto.ParseFromProto(SL.Text, iPos);
+      sProto:= SL.Text;
+      Proto.ParseFromProto(sProto, Length(sProto), iPos);
       Generate(Proto, OutputDir, Encoding);
     finally
       Proto.Free;

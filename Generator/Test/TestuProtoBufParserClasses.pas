@@ -160,7 +160,7 @@ procedure TestTAbstractProtoBufParserItem.CallParseFromProto(
   const Proto: string; AParserItem: TAbstractProtoBufParserItem);
 begin
   FLastiPos:= 1;
-  AParserItem.ParseFromProto(Proto, FLastiPos);
+  AParserItem.ParseFromProto(Proto, Length(Proto), FLastiPos);
 end;
 
 procedure TestTProtoBufPropOption.SetUp;
@@ -375,7 +375,7 @@ end;
 procedure TestTProtoBufEnum.CallParseFromProto(const AProto: string);
 begin
   FLastiPos:= 1;
-  FProtoBufEnum.ParseFromProto(AProto, FLastiPos);
+  FProtoBufEnum.ParseFromProto(AProto, Length(AProto), FLastiPos);
 end;
 
 procedure TestTProtoBufEnum.ParserErrorOptionEqualsMissing;
@@ -530,7 +530,7 @@ end;
 procedure TestTProtoBufMessage.CallParseFromProto(const AProto: string);
 begin
   FLastiPos:= 1;
-  FProtoBufMessage.ParseFromProto(AProto, FLastiPos);
+  FProtoBufMessage.ParseFromProto(AProto, Length(AProto), FLastiPos);
 end;
 
 procedure TestTProtoBufMessage.SetUp;
@@ -618,7 +618,7 @@ begin
     '// fields of imported types'#13#10 + 'optional EnumGlobal             FieldImp2 = 51;'#13#10 + ''#13#10 + '// extensions 1000 to 1999;'#13#10 + '}';
 
   iPos := 1;
-  FProtoFile.ParseFromProto(Proto, iPos);
+  FProtoFile.ParseFromProto(Proto, Length(Proto), iPos);
 
   CheckEquals('test1', FProtoFile.Name);
   CheckEquals(1, FProtoFile.ProtoBufEnums.Count);
@@ -650,7 +650,7 @@ begin
     '};';
   iPos := 1;
   FProtoFile.FileName := ChangeFileExt(ParamStr(0), '.proto');
-  FProtoFile.ParseFromProto(Proto, iPos);
+  FProtoFile.ParseFromProto(Proto, Length(Proto), iPos);
 
   CheckEquals('test1', FProtoFile.Name);
   CheckEquals(1, FProtoFile.ProtoBufEnums.Count);
@@ -684,7 +684,7 @@ begin
     #13#10 + 'optional EnumGlobal             FieldImp2 = 51;' + #13#10 + '' + #13#10 + '// extensions 1000 to 1999;' + #13#10 + '}';
 
   iPos := 1;
-  FProtoFile.ParseFromProto(Proto, iPos);
+  FProtoFile.ParseFromProto(Proto, Length(Proto), iPos);
 
   CheckEquals('test1', FProtoFile.Name);
   CheckEquals(1, FProtoFile.ProtoBufEnums.Count);
@@ -711,7 +711,7 @@ begin
     'g2 = 2;'#13#10 + //
     '}';
   iPos := 1;
-  FProtoFile.ParseFromProto(Proto, iPos);
+  FProtoFile.ParseFromProto(Proto, Length(Proto), iPos);
 
   CheckTrue(FProtoFile.ProtoSyntaxVersion = psv3);
   CheckEquals('test1', FProtoFile.Name);

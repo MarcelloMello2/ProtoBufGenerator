@@ -16,7 +16,8 @@ type
     constructor Create(ARoot: TAbstractProtoBufParserItem); virtual;
     destructor Destroy; override;
 
-    procedure ParseFromProto(const Proto: string; var iPos: Integer); virtual; abstract;
+    procedure ParseFromProto(const Proto: string; const ProtoLen: NativeUInt;
+      var iPos: Integer); virtual; abstract;
     procedure AddCommentsToBeginning(AComments: TStringList);
 
     property Name: string read FName write FName;
@@ -35,7 +36,8 @@ type
     constructor Create(ARoot: TAbstractProtoBufParserItem); virtual;
     destructor Destroy; override;
 
-    procedure ParseFromProto(const Proto: string; var iPos: Integer); virtual;
+    procedure ParseFromProto(const Proto: string; const ProtoLen: NativeUInt;
+      var iPos: Integer); virtual;
     procedure AddCommentsToBeginning(AComments: TStringList);
 
     property Name: string read FName write FName;
@@ -96,7 +98,8 @@ begin
   inherited;
 end;
 
-procedure TAbstractProtoBufParserContainer<T>.ParseFromProto(const Proto: string; var iPos: Integer);
+procedure TAbstractProtoBufParserContainer<T>.ParseFromProto(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: Integer);
 begin
   FComments.Clear;
   Clear;

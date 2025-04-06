@@ -105,7 +105,7 @@ begin
     sProto:=sProto +//
       'message TestMsg0 {}'#13#10;
     OutputDir:=ExtractFilePath(ParamStr(0));
-    Proto.ParseFromProto(sProto, iPos);
+    Proto.ParseFromProto(sProto, Length(sProto), iPos);
     FProtoBufGenerator.Generate(Proto, OutputDir);
     // TODO: Validate method results
   finally
@@ -169,7 +169,7 @@ begin
     sProto:=sProto +//
       'message TestMsg0 {}'#13#10;
     OutputDir:=ExtractFilePath(ParamStr(0));
-    Proto.ParseFromProto(sProto, iPos);
+    Proto.ParseFromProto(sProto, Length(sProto), iPos);
     FProtoBufGenerator.Generate(Proto, OutputDir);
     // TODO: Validate method results
   finally

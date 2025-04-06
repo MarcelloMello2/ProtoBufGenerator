@@ -39,7 +39,8 @@ type
   private
     FOptionValue: string;
   public
-    procedure ParseFromProto(const Proto: string; var iPos: integer); override;
+    procedure ParseFromProto(const Proto: string; const ProtoLen: NativeUInt;
+      var iPos: integer); override;
     property OptionValue: string read FOptionValue;
   end;
 
@@ -48,7 +49,8 @@ type
     function GetHasValue(const OptionName: string): Boolean;
     function GetValue(const OptionName: string): string;
   public
-    procedure ParseFromProto(const Proto: string; var iPos: integer); override;
+    procedure ParseFromProto(const Proto: string;
+      const ProtoLen: NativeUInt; var iPos: integer); override;
     property HasValue[const OptionName: string]: Boolean read GetHasValue;
     property Value[const OptionName: string]: string read GetValue;
   end;
@@ -64,7 +66,8 @@ type
     constructor Create(ARoot: TAbstractProtoBufParserItem); override;
     destructor Destroy; override;
 
-    procedure ParseFromProto(const Proto: string; var iPos: integer); override;
+    procedure ParseFromProto(const Proto: string; const ProtoLen: NativeUInt;
+      var iPos: integer); override;
 
     property PropKind: TPropKind read FPropKind;
     property PropType: string read FPropType;
@@ -78,7 +81,8 @@ type
     FValue: integer;
     FIsHexValue: Boolean;
   public
-    procedure ParseFromProto(const Proto: string; var iPos: integer); override;
+    procedure ParseFromProto(const Proto: string; const ProtoLen: NativeUInt;
+      var iPos: integer); override;
 
     property Value: integer read FValue;
     property IsHexValue: Boolean read FIsHexValue;
@@ -89,7 +93,8 @@ type
     FAllowAlias: Boolean;
     FHexFormatString: string;
   public
-    procedure ParseFromProto(const Proto: string; var iPos: integer); override;
+    procedure ParseFromProto(const Proto: string; const ProtoLen: NativeUInt;
+      var iPos: integer); override;
 
     function GetEnumValueString(AEnumIndex: Integer): string;
 
@@ -98,7 +103,8 @@ type
 
   TProtoBufMessage = class(TAbstractProtoBufParserContainer<TProtoBufProperty>)
   public
-    procedure ParseFromProto(const Proto: string; var iPos: integer); override;
+    procedure ParseFromProto(const Proto: string; const ProtoLen: NativeUInt;
+      var iPos: integer); override;
 
     function HasPropertyOfType(const APropType: string): Boolean;
   end;
@@ -132,10 +138,14 @@ type
     constructor Create(ARoot: TAbstractProtoBufParserItem); override;
     destructor Destroy; override;
 
-    procedure ParseEnum(const Proto: string; var iPos: integer; Comments: TStringList);
-    procedure ParseMessage(const Proto: string; var iPos: integer; Comments: TStringList; IsExtension: Boolean = False);
+    procedure ParseEnum(const Proto: string;
+      const ProtoLen: NativeUInt; var iPos: integer; Comments: TStringList);
+    procedure ParseMessage(const Proto: string;
+      const ProtoLen: NativeUInt; var iPos: integer; Comments: TStringList;
+      IsExtension: Boolean = False);
 
-    procedure ParseFromProto(const Proto: string; var iPos: integer); override;
+    procedure ParseFromProto(const Proto: string; const ProtoLen: NativeUInt;
+      var iPos: integer); override;
 
     property Imports: TStrings read FImports;
     property ProtoBufEnums: TProtoBufEnumList read FProtoBufEnums;
@@ -254,9 +264,10 @@ begin
   inherited;
 end;
 
-procedure SkipWhitespaces(const Proto: string; var iPos: integer; ASkipParagraphSeparator: Boolean = True);
+procedure SkipWhitespaces(const Proto: string; const ProtoLen: NativeUInt;
+  var iPos: integer; ASkipParagraphSeparator: Boolean = True);
 begin
-  while (iPos <= Length(Proto)) and Proto[iPos].IsWhiteSpace do
+  while (iPos <= ProtoLen) and Proto[iPos].IsWhiteSpace do
   begin
     if not ASkipParagraphSeparator then
     begin
@@ -272,72 +283,79 @@ begin
   end;
 end;
 
-function ReadAllTillChar(const Proto: string; var iPos: integer; BreakSymbol: array of Char): string;
+function ReadAllTillChar(const Proto: string; const ProtoLen: NativeUInt;
+  var iPos: integer; BreakSymbol: array of Char): string;
 begin
   Result := '';
-  while (iPos <= Length(Proto)) and not Proto[iPos].IsInArray(BreakSymbol) do
+  while (iPos <= ProtoLen) and not Proto[iPos].IsInArray(BreakSymbol) do
     begin
       Result := Result + Proto[iPos];
       Inc(iPos);
     end;
 end;
 
-function ReadAllToEOL(const Proto: string; var iPos: integer): string;
+function ReadAllToEOL(const Proto: string; const ProtoLen: NativeUInt;
+  var iPos: integer): string;
 begin
-  Result := ReadAllTillChar(Proto, iPos, [#13, #10]);
+  Result := ReadAllTillChar(Proto, ProtoLen, iPos, [#13, #10]);
 end;
 
-procedure ReadCommentIfExists(ADestList: TStrings; AMultiLine: Boolean; const Proto: string; var iPos: integer);
+procedure ReadCommentIfExists(ADestList: TStrings; AMultiLine: Boolean;
+  const Proto: string; const ProtoLen: NativeUInt; var iPos: integer);
 var
   s: string;
 begin
-  SkipWhitespaces(Proto, iPos, False);
-  while (iPos < Length(Proto) - 1) and (Proto[iPos] = '/') and (Proto[iPos + 1] = '/') do
+  SkipWhitespaces(Proto, ProtoLen, iPos, False);
+  while (iPos < ProtoLen - 1) and (Proto[iPos] = '/') and (Proto[iPos + 1] = '/') do
     begin
       Inc(iPos, 2);
-      SkipWhitespaces(Proto, iPos, False);
-      s:= ReadAllToEOL(Proto, iPos);
+      SkipWhitespaces(Proto, ProtoLen, iPos, False);
+      s:= ReadAllToEOL(Proto, ProtoLen, iPos);
       if Length(s) > 0 then
         ADestList.Add(s);
       //since we've Read to EOL, this will skip the EOL, if allowed
       if AMultiLine then
-        SkipWhitespaces(Proto, iPos);
+        SkipWhitespaces(Proto, ProtoLen, iPos);
     end;
 end;
 
-procedure SkipAllComments(const Proto: string; var iPos: integer);
+procedure SkipAllComments(const Proto: string; const ProtoLen: NativeUInt;
+  var iPos: integer);
 begin
   while True do
   begin
-    SkipWhitespaces(Proto, iPos);
-    if (Proto[iPos] = '/') and (Proto[iPos + 1] = '/') then
-      ReadAllToEOL(Proto, iPos) else
+    SkipWhitespaces(Proto, ProtoLen, iPos);
+    if (iPos < ProtoLen - 1) and (Proto[iPos] = '/') and (Proto[iPos + 1] = '/') then
+      ReadAllToEOL(Proto, ProtoLen, iPos) else
       Break;
   end;
-  SkipWhitespaces(Proto, iPos);
+  SkipWhitespaces(Proto, ProtoLen, iPos);
 end;
 
-procedure SkipRequiredChar(const Proto: string; var iPos: integer; const RequiredChar: Char);
+procedure SkipRequiredChar(const Proto: string; const ProtoLen: NativeUInt;
+  var iPos: integer; const RequiredChar: Char);
 begin
-  SkipWhitespaces(Proto, iPos);
-  if (iPos > Length(Proto)) or (Proto[iPos] <> RequiredChar) then
+  SkipWhitespaces(Proto, ProtoLen, iPos);
+  if (iPos > ProtoLen) or (Proto[iPos] <> RequiredChar) then
     raise EParserError.Create(RequiredChar + ' not found in ProtoBuf');
   Inc(iPos);
 end;
 
-function ReadWordFromBuf(const Proto: string; var iPos: integer; BreakSymbols: array of Char): string;
+function ReadWordFromBuf(const Proto: string; const ProtoLen: NativeUInt;
+  var iPos: integer; BreakSymbols: array of Char): string;
 begin
-  SkipWhitespaces(Proto, iPos);
+  SkipWhitespaces(Proto, ProtoLen, iPos);
 
   Result := '';
-  while (iPos <= Length(Proto)) and not Proto[iPos].IsWhiteSpace and not Proto[iPos].IsInArray(BreakSymbols) do
+  while (iPos <= ProtoLen) and not Proto[iPos].IsWhiteSpace and not Proto[iPos].IsInArray(BreakSymbols) do
     begin
       Result := Result + Proto[iPos];
       Inc(iPos);
     end;
 end;
 
-procedure TProtoBufProperty.ParseFromProto(const Proto: string; var iPos: integer);
+procedure TProtoBufProperty.ParseFromProto(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer);
 var
   Buf: string;
   tmpOption: TProtoBufPropOption;
@@ -349,17 +367,17 @@ begin
     [optional] int32   DefField1  = 1  [default = 2]; // def field 1, default value 2
     int64 DefField2 = 2;
   }
-  Buf := ReadWordFromBuf(Proto, iPos, []);
+  Buf := ReadWordFromBuf(Proto, ProtoLen, iPos, []);
   // in Buf - first word of property. Choose type
   FPropKind := StrToPropKind(Buf);
   if FPropKind = ptReserved then
     begin
-      ReadAllTillChar(Proto, iPos, [';']);
-      SkipRequiredChar(Proto, iPos, ';');
+      ReadAllTillChar(Proto, ProtoLen, iPos, [';']);
+      SkipRequiredChar(Proto, ProtoLen, iPos, ';');
       exit; // reserved is not supported now by this parser
     end;
   if FPropKind <> ptDefaultOptional then // if required/optional/repeated is not skipped,
-    Buf := ReadWordFromBuf(Proto, iPos, []); // read type of property
+    Buf := ReadWordFromBuf(Proto, ProtoLen, iPos, []); // read type of property
 
   FPropType := Buf;
 
@@ -367,20 +385,20 @@ begin
   begin
     FName := FPropType;
     // skip '{' character
-    SkipRequiredChar(Proto, iPos, '{');
+    SkipRequiredChar(Proto, ProtoLen, iPos, '{');
   end else
   begin
-    FName := ReadWordFromBuf(Proto, iPos, ['=']);
+    FName := ReadWordFromBuf(Proto, ProtoLen, iPos, ['=']);
 
     // skip '=' character
-    SkipRequiredChar(Proto, iPos, '=');
+    SkipRequiredChar(Proto, ProtoLen, iPos, '=');
 
     // read property tag
-    Buf := ReadWordFromBuf(Proto, iPos, [';', '[']);
+    Buf := ReadWordFromBuf(Proto, ProtoLen, iPos, [';', '[']);
     FPropFieldNum := StrToInt(Buf);
-    SkipWhitespaces(Proto, iPos);
+    SkipWhitespaces(Proto, ProtoLen, iPos);
     if Proto[iPos] = '[' then
-      FPropOptions.ParseFromProto(Proto, iPos);
+      FPropOptions.ParseFromProto(Proto, ProtoLen, iPos);
 
     if Assigned(FRoot) then
       if TProtoFile(FRoot).ProtoSyntaxVersion = psv3 then
@@ -393,39 +411,40 @@ begin
           end;
 
     // read separator
-    SkipRequiredChar(Proto, iPos, ';');
+    SkipRequiredChar(Proto, ProtoLen, iPos, ';');
   end;
 
-  ReadCommentIfExists(FComments, False, Proto, iPos);
+  ReadCommentIfExists(FComments, False, Proto, ProtoLen, iPos);
 end;
 
 { TProtoBufPropOption }
 
-procedure TProtoBufPropOption.ParseFromProto(const Proto: string; var iPos: integer);
+procedure TProtoBufPropOption.ParseFromProto(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer);
 begin
   inherited;
   { [default = Val2, packed = true]; }
-  SkipWhitespaces(Proto, iPos);
-  FName := ReadWordFromBuf(Proto, iPos, ['=']);
+  SkipWhitespaces(Proto, ProtoLen, iPos);
+  FName := ReadWordFromBuf(Proto, ProtoLen, iPos, ['=']);
 
   // skip '=' character
-  SkipRequiredChar(Proto, iPos, '=');
+  SkipRequiredChar(Proto, ProtoLen, iPos, '=');
 
-  SkipWhitespaces(Proto, iPos);
-  if (iPos <= Length(Proto)) and (Proto[iPos] <> '"') then
-    FOptionValue := ReadWordFromBuf(Proto, iPos, [',', ']'])
+  SkipWhitespaces(Proto, ProtoLen, iPos);
+  if (iPos <= ProtoLen) and (Proto[iPos] <> '"') then
+    FOptionValue := ReadWordFromBuf(Proto, ProtoLen, iPos, [',', ']'])
   else
     begin
       Inc(iPos);
       { TODO : Solve problem with double "" in the middle of string... }
-      FOptionValue := Trim('"' + ReadAllTillChar(Proto, iPos, [',', ']', #13, #10]));
+      FOptionValue := Trim('"' + ReadAllTillChar(Proto, ProtoLen, iPos, [',', ']', #13, #10]));
       if not EndsStr('"', FOptionValue) then
         raise EParserError.Create('no string escape in property ' + Name);
       // SkipRequiredChar(Proto, iPos, '"');
     end;
 
-  SkipWhitespaces(Proto, iPos);
-  if (iPos <= Length(Proto)) and (Proto[iPos] = ',') then
+  SkipWhitespaces(Proto, ProtoLen, iPos);
+  if (iPos <= ProtoLen) and (Proto[iPos] = ',') then
     Inc(iPos);
 end;
 
@@ -457,46 +476,48 @@ begin
       end;
 end;
 
-procedure TProtoBufPropOptions.ParseFromProto(const Proto: string; var iPos: integer);
+procedure TProtoBufPropOptions.ParseFromProto(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer);
 var
   Option: TProtoBufPropOption;
 begin
   inherited;
-  SkipRequiredChar(Proto, iPos, '[');
-  SkipWhitespaces(Proto, iPos); // check for empty options
-  while (iPos <= Length(Proto)) and (Proto[iPos] <> ']') do
+  SkipRequiredChar(Proto, ProtoLen, iPos, '[');
+  SkipWhitespaces(Proto, ProtoLen, iPos); // check for empty options
+  while (iPos <= ProtoLen) and (Proto[iPos] <> ']') do
     begin
       Option := TProtoBufPropOption.Create(FRoot);
       try
-        Option.ParseFromProto(Proto, iPos);
+        Option.ParseFromProto(Proto, ProtoLen, iPos);
         Add(Option);
         Option := nil;
-        SkipWhitespaces(Proto, iPos);
+        SkipWhitespaces(Proto, ProtoLen, iPos);
       finally
         Option.Free;
       end;
     end;
-  SkipRequiredChar(Proto, iPos, ']');
+  SkipRequiredChar(Proto, ProtoLen, iPos, ']');
 end;
 
 { TProtoBufEnumValue }
 
-procedure TProtoBufEnumValue.ParseFromProto(const Proto: string; var iPos: integer);
+procedure TProtoBufEnumValue.ParseFromProto(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer);
 var
   s: string;
 begin
   inherited;
   { Val1 = 1; }
   FComments.Clear;
-  FName := ReadWordFromBuf(Proto, iPos, ['=']);
+  FName := ReadWordFromBuf(Proto, ProtoLen, iPos, ['=']);
   if Length(FName) = 0 then
     raise EParserError.Create('Enumeration contains unnamed value');
-  SkipRequiredChar(Proto, iPos, '=');
-  s:= ReadWordFromBuf(Proto, iPos, [';']);
+  SkipRequiredChar(Proto, ProtoLen, iPos, '=');
+  s:= ReadWordFromBuf(Proto, ProtoLen, iPos, [';']);
   FValue := StrToInt(s);
   FIsHexValue:= Pos('0x', s) = 1;
-  SkipRequiredChar(Proto, iPos, ';');
-  ReadCommentIfExists(FComments, False, Proto, iPos);
+  SkipRequiredChar(Proto, ProtoLen, iPos, ';');
+  ReadCommentIfExists(FComments, False, Proto, ProtoLen, iPos);
 end;
 
 { TProtoBufEnum }
@@ -511,7 +532,8 @@ begin
     Result:= IntToStr(item.Value);
 end;
 
-procedure TProtoBufEnum.ParseFromProto(const Proto: string; var iPos: integer);
+procedure TProtoBufEnum.ParseFromProto(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer);
 var
   Item: TProtoBufEnumValue;
   lPos, lMaxValue: Integer;
@@ -525,41 +547,41 @@ begin
     } *)
 
   lMaxValue:= 0;
-  FName := ReadWordFromBuf(Proto, iPos, ['{']);
-  SkipRequiredChar(Proto, iPos, '{');
+  FName := ReadWordFromBuf(Proto, ProtoLen, iPos, ['{']);
+  SkipRequiredChar(Proto, ProtoLen, iPos, '{');
   TempComments:= TStringList.Create;
   try
     TempComments.TrailingLineBreak:= False;
-    while (iPos <= Length(Proto)) and (Proto[iPos] <> '}') do
+    while (iPos <= ProtoLen) and (Proto[iPos] <> '}') do
       begin
         TempComments.Clear;
-        SkipWhitespaces(Proto, iPos);
-        ReadCommentIfExists(TempComments, True, Proto, iPos);
-        if (iPos <= Length(Proto)) and (Proto[iPos] = '}') then //after reading comments, the enum might prematurly end
+        SkipWhitespaces(Proto, ProtoLen, iPos);
+        ReadCommentIfExists(TempComments, True, Proto, ProtoLen, iPos);
+        if (iPos <= ProtoLen) and (Proto[iPos] = '}') then //after reading comments, the enum might prematurly end
           Continue;
 
         lPos:= iPos;
-        sOptionPeek:= ReadWordFromBuf(Proto, lPos, [';']);
+        sOptionPeek:= ReadWordFromBuf(Proto, ProtoLen, lPos, [';']);
         if SameText(sOptionPeek, 'option') then
         begin
           iPos:= lPos;
-          sOptionPeek:= ReadWordFromBuf(Proto, iPos, [';']);
-          SkipRequiredChar(Proto, iPos, '=');
-          sOptionValue:= ReadWordFromBuf(Proto, iPos, [';']);
+          sOptionPeek:= ReadWordFromBuf(Proto, ProtoLen, iPos, [';']);
+          SkipRequiredChar(Proto, ProtoLen, iPos, '=');
+          sOptionValue:= ReadWordFromBuf(Proto, ProtoLen, iPos, [';']);
           if SameText(sOptionPeek, 'allow_alias') then
             FAllowAlias:= SameText(sOptionValue, 'true') else
             raise EParserError.CreateFmt('Unknown option %s while parsing enum %s', [sOptionPeek, FName]);
-          SkipRequiredChar(Proto, iPos, ';');
+          SkipRequiredChar(Proto, ProtoLen, iPos, ';');
         end else
         begin
           Item := TProtoBufEnumValue.Create(FRoot);
           try
-            Item.ParseFromProto(Proto, iPos);
+            Item.ParseFromProto(Proto, ProtoLen, iPos);
             Item.AddCommentsToBeginning(TempComments);
             Add(Item);
             lMaxValue:= Max(lMaxValue, Item.Value);
             Item := nil;
-            SkipWhitespaces(Proto, iPos);
+            SkipWhitespaces(Proto, ProtoLen, iPos);
           finally
             Item.Free;
           end;
@@ -568,8 +590,8 @@ begin
   finally
     TempComments.Free;
   end;
-  SkipRequiredChar(Proto, iPos, '}');
-  ReadCommentIfExists(FComments, False, Proto, iPos);
+  SkipRequiredChar(Proto, ProtoLen, iPos, '}');
+  ReadCommentIfExists(FComments, False, Proto, ProtoLen, iPos);
 
   if lMaxValue < 256 then
     FHexFormatString:= '$%.2x' else
@@ -599,7 +621,8 @@ begin
       end;
 end;
 
-procedure TProtoBufMessage.ParseFromProto(const Proto: string; var iPos: integer);
+procedure TProtoBufMessage.ParseFromProto(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer);
 var
   Item, OneOfPropertyParent: TProtoBufProperty;
   TempComments: TStringList;
@@ -611,36 +634,36 @@ begin
     required int64 Field2 = 2;
     }
   *)
-  ReadCommentIfExists(FComments, True, Proto, iPos);
+  ReadCommentIfExists(FComments, True, Proto, ProtoLen, iPos);
   OneOfPropertyParent:= nil;
-  FName := ReadWordFromBuf(Proto, iPos, ['{']);
-  ReadCommentIfExists(FComments, True, Proto, iPos);
-  SkipRequiredChar(Proto, iPos, '{');
+  FName := ReadWordFromBuf(Proto, ProtoLen, iPos, ['{']);
+  ReadCommentIfExists(FComments, True, Proto, ProtoLen, iPos);
+  SkipRequiredChar(Proto, ProtoLen, iPos, '{');
   TempComments:= TStringList.Create;
   try
     TempComments.TrailingLineBreak:= False;
-    while (iPos <= Length(Proto)) and ((Proto[iPos] <> '}') or (OneOfPropertyParent <> nil)) do
+    while (iPos <= ProtoLen) and ((Proto[iPos] <> '}') or (OneOfPropertyParent <> nil)) do
       begin
         if (OneOfPropertyParent <> nil) and (Proto[iPos] = '}') then
         begin
-          SkipRequiredChar(Proto, iPos, '}');
-          SkipWhitespaces(Proto, iPos);
-          ReadCommentIfExists(OneOfPropertyParent.Comments, False, Proto, iPos);
+          SkipRequiredChar(Proto, ProtoLen, iPos, '}');
+          SkipWhitespaces(Proto, ProtoLen, iPos);
+          ReadCommentIfExists(OneOfPropertyParent.Comments, False, Proto, ProtoLen, iPos);
           OneOfPropertyParent:= nil;
-          SkipWhitespaces(Proto, iPos);
+          SkipWhitespaces(Proto, ProtoLen, iPos);
           Continue;
         end;
         TempComments.Clear;
-        SkipWhitespaces(Proto, iPos);
-        ReadCommentIfExists(TempComments, True, Proto, iPos);
-        if (iPos <= Length(Proto)) and (Proto[iPos] = '}') then //after reading comments, the message might prematurly end
+        SkipWhitespaces(Proto, ProtoLen, iPos);
+        ReadCommentIfExists(TempComments, True, Proto, ProtoLen, iPos);
+        if (iPos <= ProtoLen) and (Proto[iPos] = '}') then //after reading comments, the message might prematurly end
           Continue;
         if PosEx('enum', Proto, iPos) = iPos then
           begin
             Inc(iPos, Length('enum'));
             if FRoot is TProtoFile then
               begin
-                TProtoFile(FRoot).ParseEnum(Proto, iPos, TempComments);
+                TProtoFile(FRoot).ParseEnum(Proto, ProtoLen, iPos, TempComments);
                 Continue;
               end;
           end;
@@ -649,14 +672,14 @@ begin
             Inc(iPos, Length('message'));
             if FRoot is TProtoFile then
               begin
-                TProtoFile(FRoot).ParseMessage(Proto, iPos, TempComments);
+                TProtoFile(FRoot).ParseMessage(Proto, ProtoLen, iPos, TempComments);
                 Continue;
               end;
           end;
 
         Item := TProtoBufProperty.Create(FRoot);
         try
-          Item.ParseFromProto(Proto, iPos);
+          Item.ParseFromProto(Proto, ProtoLen, iPos);
           Item.OneOfPropertyParent:= OneOfPropertyParent;
           Item.AddCommentsToBeginning(TempComments);
           Add(Item);
@@ -667,7 +690,7 @@ begin
             OneOfPropertyParent:= Item;
           end;
           Item := nil;
-          SkipWhitespaces(Proto, iPos);
+          SkipWhitespaces(Proto, ProtoLen, iPos);
         finally
           Item.Free;
         end;
@@ -675,8 +698,8 @@ begin
   finally
     TempComments.Free;
   end;
-  SkipRequiredChar(Proto, iPos, '}');
-  ReadCommentIfExists(FComments, False, Proto, iPos);
+  SkipRequiredChar(Proto, ProtoLen, iPos, '}');
+  ReadCommentIfExists(FComments, False, Proto, ProtoLen, iPos);
 
   //do NOT sort field definitions by FieldNumber; order is important for OneOf,
   //also better to keep order of declaration the same as in .proto file
@@ -730,7 +753,7 @@ var
   iPos: integer;
   OldFileName: string;
   OldName: string;
-  sFileName: string;
+  sFileName, sProto: string;
 begin
   if FFileName = '' then
     raise EParserError.CreateFmt('Cant import from %s, because source .proto file name not specified', [AFileName]);
@@ -746,7 +769,8 @@ begin
       try
         FileName := sFileName;
         iPos := 1;
-        ParseFromProto(SL.Text, iPos);
+        sProto:= SL.Text;
+        ParseFromProto(sProto, Length(sProto), iPos);
         FImports.Add(FName);
       finally
         FFileName := OldFileName;
@@ -760,14 +784,15 @@ begin
   end;
 end;
 
-procedure TProtoFile.ParseEnum(const Proto: string; var iPos: integer; Comments: TStringList);
+procedure TProtoFile.ParseEnum(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer; Comments: TStringList);
 var
   Enum: TProtoBufEnum;
 begin
   Enum := TProtoBufEnum.Create(Self);
   try
     Enum.IsImported := FInImportCounter > 0;
-    Enum.ParseFromProto(Proto, iPos);
+    Enum.ParseFromProto(Proto, ProtoLen, iPos);
     Enum.AddCommentsToBeginning(Comments);
     FProtoBufEnums.Add(Enum);
     Enum := nil;
@@ -776,7 +801,8 @@ begin
   end;
 end;
 
-procedure TProtoFile.ParseFromProto(const Proto: string; var iPos: integer);
+procedure TProtoFile.ParseFromProto(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer);
 var
   Buf: string;
   i, j: integer;
@@ -787,25 +813,25 @@ begin
   TempComments:= TStringList.Create;
   try
     TempComments.TrailingLineBreak:= False;
-    while iPos < Length(Proto) do
+    while iPos < ProtoLen do
       begin
-        SkipWhitespaces(Proto, iPos);
-        ReadCommentIfExists(TempComments, True, Proto, iPos);
-        SkipWhitespaces(Proto, iPos);
-        Buf := ReadWordFromBuf(Proto, iPos, []);
+        SkipWhitespaces(Proto, ProtoLen, iPos);
+        ReadCommentIfExists(TempComments, True, Proto, ProtoLen, iPos);
+        SkipWhitespaces(Proto, ProtoLen, iPos);
+        Buf := ReadWordFromBuf(Proto, ProtoLen, iPos, []);
 
         if Buf = 'package' then
           begin
-            FName := ReadWordFromBuf(Proto, iPos, [';']);
-            SkipRequiredChar(Proto, iPos, ';');
+            FName := ReadWordFromBuf(Proto, ProtoLen, iPos, [';']);
+            SkipRequiredChar(Proto, ProtoLen, iPos, ';');
             TempComments.Clear;
           end;
 
         if Buf = 'syntax' then
           begin
-            SkipRequiredChar(Proto, iPos, '=');
-            Buf := Trim(ReadWordFromBuf(Proto, iPos, [';']));
-            SkipRequiredChar(Proto, iPos, ';');
+            SkipRequiredChar(Proto, ProtoLen, iPos, '=');
+            Buf := Trim(ReadWordFromBuf(Proto, ProtoLen, iPos, [';']));
+            SkipRequiredChar(Proto, ProtoLen, iPos, ';');
             if Buf = '"proto3"' then
               FProtoSyntaxVersion := psv3;
             TempComments.Clear;
@@ -813,26 +839,26 @@ begin
 
         if Buf = 'import' then
           begin
-            Buf := Trim(ReadAllTillChar(Proto, iPos, [';']));
+            Buf := Trim(ReadAllTillChar(Proto, ProtoLen, iPos, [';']));
             ImportFromProtoFile(AnsiDequotedStr(Buf, '"'));
-            SkipRequiredChar(Proto, iPos, ';');
+            SkipRequiredChar(Proto, ProtoLen, iPos, ';');
             TempComments.Clear;
           end;
 
         if Buf = 'enum' then
         begin
-          ParseEnum(Proto, iPos, TempComments);
+          ParseEnum(Proto, ProtoLen, iPos, TempComments);
           TempComments.Clear;
         end;
 
         if Buf = 'message' then
         begin
-          ParseMessage(Proto, iPos, TempComments);
+          ParseMessage(Proto, ProtoLen, iPos, TempComments);
           TempComments.Clear;
         end;
         if Buf = 'extend' then
         begin
-          ParseMessage(Proto, iPos, TempComments, True);
+          ParseMessage(Proto, ProtoLen, iPos, TempComments, True);
           TempComments.Clear;
         end;
       end;
@@ -849,7 +875,9 @@ begin
       end;
 end;
 
-procedure TProtoFile.ParseMessage(const Proto: string; var iPos: integer; Comments: TStringList; IsExtension: Boolean);
+procedure TProtoFile.ParseMessage(const Proto: string;
+  const ProtoLen: NativeUInt; var iPos: integer; Comments: TStringList;
+  IsExtension: Boolean);
 var
   Msg: TProtoBufMessage;
   i: integer;
@@ -857,7 +885,7 @@ begin
   Msg := TProtoBufMessage.Create(Self);
   try
     Msg.IsImported := FInImportCounter > 0;
-    Msg.ParseFromProto(Proto, iPos);
+    Msg.ParseFromProto(Proto, ProtoLen, iPos);
     if IsExtension then
       begin
         for i := 1 to High(integer) do
